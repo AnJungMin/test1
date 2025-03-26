@@ -4,3 +4,4 @@ torch
 Pillow
 python-multipart
 gunicorn
+torchvision
