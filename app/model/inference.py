@@ -2,9 +2,7 @@ import torch
 from PIL import Image
 from torchvision import transforms
 import os
-
-# (필요하다면) 같은 폴더에 있는 your_model.py에서 클래스 불러오기
-# from .your_model import MultiTaskMobileNetV3
+from io import BytesIO
 
 # 전처리 파이프라인(학습 시 사용했던 것과 동일하게)
 data_transforms = transforms.Compose([
@@ -18,14 +16,15 @@ def load_model(model_path, device='cpu'):
     저장된 .pth 모델 파일을 불러와서 평가 모드로 전환한 뒤 반환
     """
     model = torch.load(model_path, map_location=device)
-    model.eval()
+    model.eval()  # 평가 모드로 전환
     return model
 
-def predict_image(model, image_path, device='cpu'):
+def predict_image(model, file_contents, device='cpu'):
     """
     단일 이미지를 입력받아 질환 분류 결과(심각도 포함)를 리턴
     """
-    image = Image.open(image_path).convert("RGB")
+    # UploadFile로 받은 파일 내용을 PIL 이미지로 변환
+    image = Image.open(BytesIO(file_contents)).convert("RGB")
     input_tensor = data_transforms(image).unsqueeze(0).to(device)
 
     with torch.no_grad():
@@ -64,6 +63,8 @@ if __name__ == "__main__":
     model = load_model(model_path, device=device)
     
     test_image_path = r"테스트_이미지_경로.jpg"
-    predictions = predict_image(model, test_image_path, device=device)
+    with open(test_image_path, "rb") as f:
+        file_contents = f.read()
+    predictions = predict_image(model, file_contents, device=device)
     for pred in predictions:
         print(pred)
