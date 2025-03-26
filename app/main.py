@@ -52,10 +52,12 @@ async def predict(file: UploadFile = File(...)):
     try:
         contents = await file.read()
         image = Image.open(io.BytesIO(contents)).convert("RGB")
-        image = data_transforms(image)
+        image = data_transforms(image)  # 이미지를 변환
 
+        # 모델을 사용하여 예측
         results = predict_image(model, image, device=device)
+
         return {"results": results}
 
     except Exception as e:
-        return {"error": str(e)}
+        return {"error": f"An error occurred during prediction: {str(e)}"}
