@@ -26,7 +26,16 @@ app.add_middleware(
 # ========================
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model_path = "app/model/MTL_BASIS.pth"
-model = torch.load(model_path, map_location=device)
+
+# torch.load 호출 시 weights_only=True 설정
+try:
+    model = torch.load(model_path, map_location=device, weights_only=True)  # weights_only=True로 설정
+except Exception as e:
+    # MultiTaskResNet 같은 글로벌 변수를 추가할 때는 safe_globals 사용
+    from torch.serialization import safe_globals
+    with safe_globals(["MultiTaskMobileNetV3"]):
+        model = torch.load(model_path, map_location=device)
+
 model.eval()
 
 # ========================
