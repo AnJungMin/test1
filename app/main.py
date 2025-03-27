@@ -6,7 +6,7 @@ import torch
 import os
 
 # 🔽 your_model과 inference 불러오기
-from app.model.your_model import MultiTaskMobileNetV3
+from app.model.your_model import MultiTaskMobileNetV3  # 모델 아키텍처 정의된 파일에서 불러오기
 from app.model.inference import data_transforms, predict_image
 
 # ========================
@@ -33,10 +33,9 @@ model_path = os.path.join(os.path.dirname(__file__), "MTL", "app", "model", "MTL
 # 모델 로드
 model = None
 try:
-    from torch.serialization import safe_globals
-    with safe_globals(["MultiTaskMobileNetV3"]):  # 사용자 정의 모델 클래스를 글로벌로 추가
-        model = torch.load(model_path, map_location=device)
-        model.eval()  # 모델을 평가 모드로 전환
+    model = MultiTaskMobileNetV3()  # your_model.py에서 정의된 모델 아키텍처 불러오기
+    model.load_state_dict(torch.load(model_path, map_location=device))  # 학습된 가중치 로드
+    model.eval()  # 모델을 평가 모드로 전환
 except Exception as e:
     print(f"모델 로딩 실패: {e}")
     # 앱이 종료되지 않도록 예외를 던지기
