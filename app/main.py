@@ -23,7 +23,9 @@ app.add_middleware(
 device = torch.device("cpu")  # CPU로 강제 설정
 
 # 모델 경로 설정
-model_path = os.path.join(os.path.dirname(__file__), "app", "model", "MTL_BASIS.pth")
+# 모델 경로 설정
+model_path = os.path.join(os.path.dirname(__file__), "model", "MTL_BASIS.pth")
+
 
 model = None
 try:
