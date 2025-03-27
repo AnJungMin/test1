@@ -27,8 +27,8 @@ app.add_middleware(
 # ========================
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-# 절대 경로로 모델 경로 설정
-model_path = os.path.join(os.path.dirname(__file__), "app", "model", "MTL_BASIS.pth")
+# 절대 경로로 모델 경로 설정 (app 폴더가 MTL 폴더 안에 있음)
+model_path = os.path.join(os.path.dirname(__file__), "MTL", "app", "model", "MTL_BASIS.pth")
 
 # 모델 로드
 model = None
