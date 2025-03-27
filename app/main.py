@@ -20,7 +20,7 @@ app.add_middleware(
 )
 
 # 모델 로드
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+device = torch.device("cpu")  # CPU로 강제 설정
 
 # 모델 경로 설정
 model_path = os.path.join(os.path.dirname(__file__), "app", "model", "MTL_BASIS.pth")
@@ -29,7 +29,7 @@ model = None
 try:
     from torch.serialization import safe_globals
     with safe_globals(["MultiTaskMobileNetV3"]):
-        model = torch.load(model_path, map_location=device)
+        model = torch.load(model_path, map_location=device)  # 모델을 CPU로 로드
         model.eval()  # 모델을 평가 모드로 설정
 except Exception as e:
     print(f"모델 로딩 실패: {e}")
