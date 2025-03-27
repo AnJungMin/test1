@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from PIL import Image
 import io
 import torch
+import os
 
 # 🔽 your_model과 inference 불러오기
 from app.model.your_model import MultiTaskMobileNetV3
@@ -25,7 +26,9 @@ app.add_middleware(
 # 모델 로드
 # ========================
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-model_path = "app/model/MTL_BASIS.pth"
+
+# 절대 경로로 모델 경로 설정
+model_path = os.path.join(os.path.dirname(__file__), "app", "model", "MTL_BASIS.pth")
 
 # safe_globals를 사용하여 모델을 안전하게 로드
 try:
