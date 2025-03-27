@@ -30,15 +30,17 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 # 절대 경로로 모델 경로 설정
 model_path = os.path.join(os.path.dirname(__file__), "app", "model", "MTL_BASIS.pth")
 
-# safe_globals를 사용하여 모델을 안전하게 로드
+# 모델 로드
+model = None
 try:
     from torch.serialization import safe_globals
     with safe_globals(["MultiTaskMobileNetV3"]):  # 사용자 정의 모델 클래스를 글로벌로 추가
         model = torch.load(model_path, map_location=device)
+        model.eval()  # 모델을 평가 모드로 전환
 except Exception as e:
     print(f"모델 로딩 실패: {e}")
-
-model.eval()
+    # 앱이 종료되지 않도록 예외를 던지기
+    raise Exception("모델 로딩에 실패했습니다.")
 
 # ========================
 # 기본 테스트용 엔드포인트
