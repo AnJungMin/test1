@@ -22,18 +22,22 @@ app.add_middleware(
 # 모델 로드
 device = torch.device("cpu")  # CPU로 강제 설정
 
-# 모델 경로 설정
+# 모델 경로 설정 (경로가 올바른지 확인)
 model_path = os.path.join(os.path.dirname(__file__), "model", "MTL_BASIS.pth")
+print(f"모델 경로: {model_path}")  # 디버깅용
 
 model = None
 try:
     # 모델 클래스 임포트
-    from app.model.model import MultiTaskMobileNetV3
+    from app.model.model import MultiTaskMobileNetV3  # 클래스 임포트
 
     # 모델 로드
     model = torch.load(model_path, map_location=device)  # 모델을 CPU로 로드
     model.eval()  # 모델을 평가 모드로 설정
     print(f"모델이 성공적으로 로드되었습니다.")
+except FileNotFoundError as e:
+    print(f"모델 파일을 찾을 수 없습니다: {e}")
+    raise Exception("모델 파일을 찾을 수 없습니다.")
 except Exception as e:
     print(f"모델 로딩 실패: {e}")
     raise Exception("모델 로딩에 실패했습니다.")
