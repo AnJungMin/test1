@@ -1,4 +1,5 @@
 import os
+import sys
 import torch
 from fastapi import FastAPI, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
@@ -8,6 +9,9 @@ import io
 # 모델과 추론 관련 함수 임포트
 from app.model.model import MultiTaskMobileNetV3  # 모델 정의 파일
 from app.model.inference import data_transforms, predict_image  # 추론 함수
+
+# __main__ 모듈에 모델 클래스를 등록 (모델 저장 시 __main__에 저장된 경우 대비)
+sys.modules["__main__"].MultiTaskMobileNetV3 = MultiTaskMobileNetV3
 
 app = FastAPI()
 
@@ -29,10 +33,10 @@ print(f"모델 경로: {model_path}")
 model = None
 try:
     from torch.serialization import safe_globals
-    # 실제 클래스 객체를 전달하여 안전하게 로드하고, weights_only 옵션을 False로 설정합니다.
+    # 실제 클래스 객체를 전달하여 안전하게 로드하고, weights_only 옵션을 False로 설정
     with safe_globals([MultiTaskMobileNetV3]):
         model = torch.load(model_path, map_location=device, weights_only=False)
-    model.eval()  # 모델을 평가 모드로 전환
+    model.eval()  # 모델을 평가 모드로 설정
     print("모델이 성공적으로 로드되었습니다.")
 except Exception as e:
     print(f"모델 로딩 실패: {e}")
@@ -49,7 +53,7 @@ async def predict(file: UploadFile = File(...)):
         image = Image.open(io.BytesIO(contents)).convert("RGB")
         image = data_transforms(image)  # 이미지 전처리
 
-        # 전처리된 이미지를 사용하여 예측
+        # 모델을 사용하여 예측
         results = predict_image(model, image, device=device)
 
         return {"results": results}
