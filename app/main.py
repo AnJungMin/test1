@@ -5,9 +5,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from PIL import Image
 import io
 
-# 모델과 데이터셋 불러오기
-from app.model.model import MultiTaskMobileNetV3  # 모델 임포트
-from app.model.inference import data_transforms, predict_image  # 추론 관련 함수
+# 모델과 추론 관련 함수 임포트
+from app.model.model import MultiTaskMobileNetV3  # 모델 정의 파일
+from app.model.inference import data_transforms, predict_image  # 추론 함수
 
 app = FastAPI()
 
@@ -19,20 +19,20 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# 모델 로드
-device = torch.device("cpu")  # CPU로 강제 설정
+# 모델 로드 (GPU 대신 CPU 사용)
+device = torch.device("cpu")
 
-# 모델 경로 설정
+# 모델 경로 설정 (현재 파일 기준 상대경로)
 model_path = os.path.join(os.path.dirname(__file__), "model", "MTL_BASIS.pth")
+print(f"모델 경로: {model_path}")
 
 model = None
 try:
-    # 모델 클래스 임포트
-    from app.model.model import MultiTaskMobileNetV3
-
-    # 모델 로드
-    model = torch.load(model_path, map_location=device)  # 모델을 CPU로 로드
-    model.eval()  # 모델을 평가 모드로 설정
+    from torch.serialization import safe_globals
+    # 실제 클래스 객체를 전달하여 안전하게 로드하고, weights_only 옵션을 False로 설정합니다.
+    with safe_globals([MultiTaskMobileNetV3]):
+        model = torch.load(model_path, map_location=device, weights_only=False)
+    model.eval()  # 모델을 평가 모드로 전환
     print("모델이 성공적으로 로드되었습니다.")
 except Exception as e:
     print(f"모델 로딩 실패: {e}")
@@ -49,8 +49,8 @@ async def predict(file: UploadFile = File(...)):
         image = Image.open(io.BytesIO(contents)).convert("RGB")
         image = data_transforms(image)  # 이미지 전처리
 
-        # 모델을 사용하여 예측
-        results = predict_image(model, contents, device=device)  # contents를 직접 예측 함수로 전달
+        # 전처리된 이미지를 사용하여 예측
+        results = predict_image(model, image, device=device)
 
         return {"results": results}
 
