@@ -1,4 +1,5 @@
 import torch
+import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader, random_split
 from torchvision import transforms
@@ -49,6 +50,7 @@ for epoch in range(num_epochs):
         optimizer.zero_grad()
         outputs = model(images)
 
+        # 손실 계산 (6개의 태스크에 대해 각각 CrossEntropyLoss 적용)
         loss = sum([criterion(outputs[i], labels[:, i]) for i in range(6)])
         loss.backward()
         optimizer.step()
@@ -56,14 +58,20 @@ for epoch in range(num_epochs):
         running_loss += loss.item() * images.size(0)
         total_samples += images.size(0)
 
+        # 예측 계산
         preds = torch.stack([output.argmax(dim=1) for output in outputs], dim=1)
+        
+        # 정확도 계산
         for task in range(6):
             task_correct[task] += (preds[:, task] == labels[:, task]).sum().item()
             overall_correct += (preds[:, task] == labels[:, task]).sum().item()
 
+    # Epoch 결과 출력
     epoch_loss = running_loss / len(train_loader.dataset)
     overall_accuracy = overall_correct / (total_samples * 6)
 
     print(f"Epoch {epoch+1}/{num_epochs}, Loss: {epoch_loss:.4f}, Overall Accuracy: {overall_accuracy * 100:.2f}%")
 
+# 학습된 모델 저장
 torch.save(model, 'app/model/MTL_BASIS.pth')
+print("Model saved to 'app/model/MTL_BASIS.pth'")

@@ -49,7 +49,7 @@ async def predict(file: UploadFile = File(...)):
         image = data_transforms(image)  # 이미지 전처리
 
         # 모델을 사용하여 예측
-        results = predict_image(model, image, device=device)
+        results = predict_image(model, contents, device=device)  # contents를 직접 예측 함수로 전달
 
         return {"results": results}
 
