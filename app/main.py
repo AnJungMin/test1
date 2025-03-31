@@ -6,16 +6,15 @@ from fastapi.middleware.cors import CORSMiddleware
 from PIL import Image
 import io
 
-# 모델과 추론 관련 함수 임포트
-from app.model.model import MultiTaskMobileNetV3  # 모델 정의
-from app.model.inference import data_transforms, predict_image  # 전처리 및 예측 함수
+from app.model.model import MultiTaskMobileNetV3
+from app.model.inference import data_transforms, predict_image
 
-# ⚠️ torch.load 오류 방지: 클래스 경로 등록
+# 🔐 모델 클래스를 __main__에 등록 (렌더 호환성)
 sys.modules["__main__"].MultiTaskMobileNetV3 = MultiTaskMobileNetV3
 
 app = FastAPI()
 
-# CORS 설정 (프론트에서 접근 가능하도록)
+# ✅ CORS 설정
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -23,33 +22,40 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# 디바이스 설정 (렌더는 GPU 미지원 → CPU)
+# ✅ 장치 설정
 device = torch.device("cpu")
-
-# 모델 경로
+model = None
 model_path = os.path.join(os.path.dirname(__file__), "model", "MTL_BASIS.pth")
 print(f"모델 경로: {model_path}")
 
-# 모델 로드
+# ✅ 모델 로딩
 try:
     model = torch.load(model_path, map_location=device, weights_only=False)
     model.eval()
     print("✅ 모델 로딩 완료")
 except Exception as e:
+    model = None
     print(f"❌ 모델 로딩 실패: {e}")
-    raise Exception("모델 로딩 중 오류 발생")
 
-# 기본 테스트용 라우트
+# ✅ 기본 라우트
 @app.get("/")
 def read_root():
+    if model is None:
+        return {"status": "❌ 모델 미로딩"}
     return {"message": "🧠 MTL AI API is running!"}
 
-# 예측 라우트
+# ✅ 예측 라우트
 @app.post("/predict")
 async def predict(file: UploadFile = File(...)):
+    if model is None:
+        return {"error": "❌ 모델이 로딩되지 않았습니다."}
     try:
         contents = await file.read()
-        results = predict_image(model, contents, device=device)
+        image = Image.open(io.BytesIO(contents)).convert("RGB")
+        tensor = data_transforms(image).unsqueeze(0).to(device)
+
+        # 🔥 추론
+        results = predict_image(model, tensor, device=device)
         return {"results": results}
     except Exception as e:
-        return {"error": f"An error occurred during prediction: {str(e)}"}
+        return {"error": f"🔥 예측 중 오류 발생: {str(e)}"}
